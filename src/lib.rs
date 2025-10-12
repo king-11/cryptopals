@@ -120,15 +120,14 @@ mod tests {
 
     #[test]
     fn test_invalid_input() {
-        let input_hex = String::from("ABCD1234I");
-
-        let result = hex_to_base64(&input_hex);
-
-        assert!(result.is_err());
         assert_eq!(
             ErrorKind::InvalidInput,
-            hex_to_base64(&input_hex).err().unwrap().kind()
-        )
+            hex_to_base64(&"ABCD123I").err().unwrap().kind()
+        );
+        assert_eq!(
+            ErrorKind::InvalidInput,
+            hex_to_base64(&"ABCD12345").err().unwrap().kind()
+        );
     }
 
     #[test]
