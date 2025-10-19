@@ -3,6 +3,8 @@
 //! This module provides functions for XOR encryption/decryption operations,
 //! which are fundamental to many cryptographic challenges.
 
+use itertools::Itertools;
+
 use crate::encoding::hex;
 use std::iter::zip;
 
@@ -59,6 +61,13 @@ pub fn xor_with_char(hex_string: &str, ch: char) -> Vec<u8> {
     xor_with_byte(hex_string, ch as u8)
 }
 
+///XORs the provided bytes by repeating the key in a cyclic manner.
+pub fn repeating_key_xor(bytes: &[u8], key: &str) -> Vec<u8> {
+    zip(bytes, key.as_bytes().iter().cycle())
+        .map(|(a, &b)| a ^ b)
+        .collect_vec()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -100,5 +109,20 @@ mod tests {
         let decrypted_hex = hex::encode(&decrypted);
 
         assert_eq!(original, decrypted_hex);
+    }
+
+    #[test]
+    fn test_repeating_key_xor() {
+        let original = "I am alpha".as_bytes();
+        let key = "ICE";
+
+        let encrypted = repeating_key_xor(original, key);
+
+        println!("{:?}", key.as_bytes());
+        println!("{:?}", original);
+        assert_eq!(
+            vec![0x00, 0x63, 0x24, 0x24, 0x63, 0x24, 0x25, 0x33, 0x2D, 0x28],
+            encrypted
+        );
     }
 }

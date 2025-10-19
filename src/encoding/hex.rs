@@ -83,6 +83,13 @@ pub fn encode(bytes: &[u8]) -> String {
     String::from_iter(chars).to_uppercase()
 }
 
+/// Convert regular text to hex encoded text
+pub fn encode_text(text: &str) -> String {
+    let bytes = text.as_bytes();
+
+    encode(bytes)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -126,5 +133,13 @@ mod tests {
         let upper = decode("DEADBEEF");
         let lower = decode("deadbeef");
         assert_eq!(upper, lower);
+    }
+
+    #[test]
+    fn test_text_encode() {
+        assert_eq!(
+            "4920616d20616c70686120313121",
+            encode_text("I am alpha 11!").to_lowercase()
+        )
     }
 }
