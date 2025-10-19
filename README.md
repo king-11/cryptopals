@@ -20,3 +20,6 @@ This crate contains solutions and utilities for the challenge. The codebase is o
 | [Basics](https://cryptopals.com/sets/1) | [Single-byte XOR cipher](https://cryptopals.com/sets/1/challenges/3) | ✅ |
 | [Basics](https://cryptopals.com/sets/1) | [Detect single-character XOR](https://cryptopals.com/sets/1/challenges/1) | ✅ |
 | [Basics](https://cryptopals.com/sets/1) | [Implement repeating-key XOR](https://cryptopals.com/sets/1/challenges/5) | ✅ |
+| [Basics](https://cryptopals.com/sets/1) | [Break repeating-key XOR](https://cryptopals.com/sets/1/challenges/6) | ◌ |
+| [Basics](https://cryptopals.com/sets/1) | [AES in ECB mode](https://cryptopals.com/sets/1/challenges/7) | ◌ |
+| [Basics](https://cryptopals.com/sets/1) | [Detect AES in ECB mode](https://cryptopals.com/sets/1/challenges/8) | ◌ |

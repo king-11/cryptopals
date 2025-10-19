@@ -10,7 +10,6 @@ use std::io::Read;
 
 fn main() {
     let ciphertext = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-    let expected = "Cooking MC's like a pound of bacon";
 
     // Load baseline text for frequency analysis
     let mut baseline_file = File::open("data/time machine.txt").expect("baseline data file exists");
@@ -26,5 +25,5 @@ fn main() {
 
     assert!(result.is_some());
     let (_, plaintext) = result.unwrap();
-    assert_eq!(plaintext, expected);
+    assert_eq!("Cooking MC's like a pound of bacon", plaintext);
 }

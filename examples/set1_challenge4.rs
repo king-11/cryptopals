@@ -10,8 +10,6 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 
 fn main() {
-    let expected = "Now that the party is jumping\n";
-
     // Load baseline text for frequency analysis
     let mut baseline_file = File::open("data/time machine.txt").expect("baseline data file exists");
     let mut baseline_content = String::new();
@@ -47,5 +45,5 @@ fn main() {
         .map(|(text, _)| text)
         .expect("found at least one match");
 
-    assert_eq!(best_match, expected);
+    assert_eq!("Now that the party is jumping\n", best_match);
 }
