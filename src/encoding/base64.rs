@@ -108,6 +108,10 @@ pub fn encode(bytes: &[u8]) -> String {
     format!("{}{}", complete_triplets, padding)
 }
 
+pub fn decode(encoded: &str) -> Vec<u8> {
+    todo!()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
