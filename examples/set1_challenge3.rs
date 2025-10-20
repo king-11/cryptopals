@@ -5,6 +5,7 @@
 use cryptopals::analysis::frequency::{
     break_single_byte_xor, calculate_frequencies, default_charset,
 };
+use cryptopals::encoding::hex;
 use std::fs::File;
 use std::io::Read;
 
@@ -21,7 +22,11 @@ fn main() {
     let character_set = default_charset();
     let expected_frequencies = calculate_frequencies(&character_set, &baseline_content);
 
-    let result = break_single_byte_xor(ciphertext, &expected_frequencies, &character_set);
+    let result = break_single_byte_xor(
+        &hex::decode(ciphertext),
+        &expected_frequencies,
+        &character_set,
+    );
 
     assert!(result.is_some());
     let (_, plaintext) = result.unwrap();

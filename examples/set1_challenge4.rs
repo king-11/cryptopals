@@ -5,6 +5,7 @@
 use cryptopals::analysis::frequency::{
     break_single_byte_xor, calculate_frequencies, default_charset,
 };
+use cryptopals::encoding::hex;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
@@ -27,9 +28,10 @@ fn main() {
     let mut scores = BTreeMap::new();
     for line in buffered_reader.lines() {
         let hex_line = line.expect("file contains valid UTF-8");
+        let bytes = hex::decode(&hex_line);
 
         if let Some((score, plaintext)) =
-            break_single_byte_xor(&hex_line, &expected_frequencies, &character_set)
+            break_single_byte_xor(&bytes, &expected_frequencies, &character_set)
         {
             scores.insert(plaintext, score);
         }

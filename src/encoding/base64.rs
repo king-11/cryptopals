@@ -32,16 +32,6 @@ fn encode_sextet(value: u8) -> char {
 /// According to RFC 4648, Base64 encoding takes groups of 3 bytes (24 bits)
 /// and splits them into 4 groups of 6 bits, each encoded as a character.
 ///
-/// # Arguments
-///
-/// * `byte_a` - First byte (required)
-/// * `byte_b` - Second byte (optional, for padding)
-/// * `byte_c` - Third byte (optional, for padding)
-///
-/// # Returns
-///
-/// A vector of 2-4 Base64 characters depending on input length.
-///
 /// # Encoding Process
 ///
 /// ```text
@@ -50,29 +40,23 @@ fn encode_sextet(value: u8) -> char {
 /// 4 sextets: [AAAAAA][AABBBBBB][BBBBCCCC][CCCCCC]
 /// ```
 fn encode_triplet(byte_a: u8, byte_b: Option<u8>, byte_c: Option<u8>) -> Vec<char> {
-    // First sextet: top 6 bits of byte_a
     let sextet_1 = byte_a >> 2;
 
-    // Second sextet: bottom 2 bits of byte_a + top 4 bits of byte_b
     let sextet_2 = (byte_a & 0b0000_0011) << 4 | (byte_b.unwrap_or(0) & 0b1111_0000) >> 4;
 
     let mut result = vec![encode_sextet(sextet_1), encode_sextet(sextet_2)];
 
-    // Guard clause: if only 1 byte, return 2 characters
     if byte_b.is_none() {
         return result;
     }
 
-    // Third sextet: bottom 4 bits of byte_b + top 2 bits of byte_c
     let sextet_3 = (byte_b.unwrap() & 0b0000_1111) << 2 | (byte_c.unwrap_or(0) & 0b1100_0000) >> 6;
     result.push(encode_sextet(sextet_3));
 
-    // Guard clause: if only 2 bytes, return 3 characters
     if byte_c.is_none() {
         return result;
     }
 
-    // Fourth sextet: bottom 6 bits of byte_c
     let sextet_4 = byte_c.unwrap() & 0b0011_1111;
     result.push(encode_sextet(sextet_4));
 

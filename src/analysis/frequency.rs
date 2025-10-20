@@ -9,27 +9,6 @@ use itertools::Itertools;
 
 use crate::crypto::xor;
 
-/// Converts a byte slice to a UTF-8 string, filtering out invalid characters.
-///
-/// This is useful when you have potentially noisy data and want to extract
-/// readable text from it.
-///
-/// # Examples
-///
-/// ```
-/// use cryptopals::analysis::frequency::bytes_to_string;
-///
-/// let bytes = vec![0x48, 0x65, 0x6c, 0x6c, 0x6f]; // "Hello"
-/// let text = bytes_to_string(&bytes);
-/// assert_eq!(text, "Hello");
-/// ```
-pub fn bytes_to_string(bytes: &[u8]) -> String {
-    bytes
-        .iter()
-        .filter_map(|&byte| char::from_u32(byte as u32))
-        .collect()
-}
-
 /// Calculates character frequencies for a given text.
 ///
 /// Returns a map of character → frequency (as a fraction of total characters).
@@ -87,15 +66,15 @@ pub fn score_text(
 /// scores each decryption attempt, and returns the best match.
 /// ```
 pub fn break_single_byte_xor(
-    hex_ciphertext: &str,
+    bytes: &[u8],
     expected_frequency: &BTreeMap<char, f32>,
     character_set: &HashSet<char>,
 ) -> Option<(f32, String)> {
     character_set
         .iter()
-        .map(|&ch| {
-            let decrypted_bytes = xor::xor_with_char(hex_ciphertext, ch);
-            bytes_to_string(&decrypted_bytes)
+        .filter_map(|&ch| {
+            let decrypted_bytes = xor::single_char_xor(bytes, ch);
+            String::from_utf8(decrypted_bytes).ok()
         })
         .map(|plaintext| {
             let score = score_text(&plaintext, expected_frequency, character_set);
@@ -115,18 +94,6 @@ pub fn default_charset() -> HashSet<char> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_bytes_to_string() {
-        let bytes = vec![0x48, 0x65, 0x6c, 0x6c, 0x6f];
-        assert_eq!(bytes_to_string(&bytes), "Hello");
-
-        let noisy_bytes = vec![0x48, 0x69, 0xFF, 0x21]; // "Hi" + invalid + "!"
-        let result = bytes_to_string(&noisy_bytes);
-
-        assert!(result.contains('H'));
-        assert!(result.contains('i'));
-    }
 
     #[test]
     fn test_calculate_frequencies() {
