@@ -11,6 +11,7 @@ use std::io::Read;
 
 fn main() {
     let ciphertext = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+    let bytes = hex::decode(ciphertext).expect("valid hex string");
 
     // Load baseline text for frequency analysis
     let mut baseline_file = File::open("data/time machine.txt").expect("baseline data file exists");
@@ -22,11 +23,7 @@ fn main() {
     let character_set = default_charset();
     let expected_frequencies = calculate_frequencies(&character_set, &baseline_content);
 
-    let result = break_single_byte_xor(
-        &hex::decode(ciphertext),
-        &expected_frequencies,
-        &character_set,
-    );
+    let result = break_single_byte_xor(&bytes, &expected_frequencies, &character_set);
 
     assert!(result.is_some());
     let (_, plaintext) = result.unwrap();

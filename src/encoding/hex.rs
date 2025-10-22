@@ -5,6 +5,8 @@
 
 use itertools::Itertools;
 
+use crate::encoding::error::{Encoding, ParsingDirection, ParsingError};
+
 /// Validates if a string is a valid hexadecimal encoding.
 ///
 /// A valid hex string must:
@@ -35,15 +37,24 @@ pub fn is_valid(hex: &str) -> bool {
 /// ```
 /// use cryptopals::encoding::hex::decode;
 ///
-/// let bytes = decode("48656c6c6f");
+/// let bytes = decode("48656c6c6f").unwrap();
 /// assert_eq!(bytes, vec![0x48, 0x65, 0x6c, 0x6c, 0x6f]);
 /// ```
 ///
 /// # Panics
 ///
 /// Panics if the string contains non-hexadecimal characters.
-pub fn decode(hex: &str) -> Vec<u8> {
-    hex.chars()
+pub fn decode(hex: &str) -> Result<Vec<u8>, ParsingError> {
+    if !is_valid(hex) {
+        return Err(ParsingError::from_string(
+            ParsingDirection::Decoding,
+            Encoding::Hex,
+            hex.to_string(),
+        ));
+    }
+
+    let bytes = hex
+        .chars()
         .map(|char| char.to_digit(16).unwrap() as u8)
         .batching(|it| match it.next() {
             None => None,
@@ -53,7 +64,9 @@ pub fn decode(hex: &str) -> Vec<u8> {
             },
         })
         .map(|(a, b)| a << 4 | b)
-        .collect_vec()
+        .collect_vec();
+
+    Ok(bytes)
 }
 
 /// Encodes a vector of bytes as a hexadecimal string.
@@ -98,7 +111,7 @@ mod tests {
     proptest! {
         #[test]
         fn valid_hex_roundtrip(s in "([A-Fa-f0-9]{2})+") {
-            let decoded = decode(&s);
+            let decoded = decode(&s).unwrap();
             let encoded = encode(&decoded);
             assert_eq!(s.to_uppercase(), encoded);
         }
@@ -124,14 +137,14 @@ mod tests {
         let hex = encode(&bytes);
         assert_eq!(hex, "48656C6C6F");
 
-        let decoded = decode("48656c6c6f");
+        let decoded = decode("48656c6c6f").unwrap();
         assert_eq!(decoded, bytes);
     }
 
     #[test]
     fn test_decode_uppercase_and_lowercase() {
-        let upper = decode("DEADBEEF");
-        let lower = decode("deadbeef");
+        let upper = decode("DEADBEEF").unwrap();
+        let lower = decode("deadbeef").unwrap();
         assert_eq!(upper, lower);
     }
 

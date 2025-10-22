@@ -32,23 +32,26 @@ mod tests {
     #[test]
     fn test_xor_hex_strings() {
         let result = xor_bytes(
-            &hex::decode("1c0111001f010100061a024b53535009181c"),
-            &hex::decode("686974207468652062756c6c277320657965"),
+            &hex::decode("1c0111001f010100061a024b53535009181c").unwrap(),
+            &hex::decode("686974207468652062756c6c277320657965").unwrap(),
         );
-        assert_eq!(result, hex::decode("746865206B696420646F6E277420706C6179"));
+        assert_eq!(
+            result,
+            hex::decode("746865206B696420646F6E277420706C6179").unwrap()
+        );
     }
 
     #[test]
     fn test_xor_with_char() {
         // 'A' is 0x41, XORing with itself should give 0
         let input = "4141";
-        let result = single_char_xor(&hex::decode(input), 'A');
+        let result = single_char_xor(&hex::decode(input).unwrap(), 'A');
         assert_eq!(result, vec![0x00, 0x00]);
     }
 
     #[test]
     fn test_xor_is_reversible() {
-        let original = hex::decode("DEADBEEF");
+        let original = hex::decode("DEADBEEF").unwrap();
         let key = 'X';
 
         let encrypted = single_char_xor(&original, key);
@@ -64,13 +67,6 @@ mod tests {
 
         let encrypted = repeating_key_xor(original, key);
 
-        println!(
-            "{:?}",
-            repeating_key_xor(
-                "piastri ftw world champion 5th taken!".as_bytes(),
-                "Mclaren"
-            )
-        );
         assert_eq!(
             vec![0x00, 0x63, 0x24, 0x24, 0x63, 0x24, 0x25, 0x33, 0x2D, 0x28],
             encrypted

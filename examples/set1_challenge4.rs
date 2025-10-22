@@ -28,7 +28,7 @@ fn main() {
     let mut scores = BTreeMap::new();
     for line in buffered_reader.lines() {
         let hex_line = line.expect("file contains valid UTF-8");
-        let bytes = hex::decode(&hex_line);
+        let bytes = hex::decode(&hex_line).expect("valid hex string");
 
         if let Some((score, plaintext)) =
             break_single_byte_xor(&bytes, &expected_frequencies, &character_set)

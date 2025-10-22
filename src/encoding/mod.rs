@@ -4,9 +4,8 @@
 //! including hexadecimal and Base64 encoding.
 
 pub mod base64;
+pub mod error;
 pub mod hex;
-
-use std::io::{Error, ErrorKind};
 
 /// Converts a hexadecimal string to Base64 encoding.
 ///
@@ -24,11 +23,7 @@ use std::io::{Error, ErrorKind};
 /// # Errors
 ///
 /// Returns an error if the input is not valid hexadecimal.
-pub fn hex_to_base64(hex_string: &str) -> Result<String, Error> {
-    if !hex::is_valid(hex_string) {
-        return Err(Error::new(ErrorKind::InvalidInput, "invalid hex encoding"));
-    }
-
-    let bytes = hex::decode(hex_string);
+pub fn hex_to_base64(hex_string: &str) -> Result<String, error::ParsingError> {
+    let bytes = hex::decode(hex_string)?;
     Ok(base64::encode(&bytes))
 }

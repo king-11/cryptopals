@@ -9,7 +9,9 @@ fn main() {
     let input_a = "1c0111001f010100061a024b53535009181c";
     let input_b = "686974207468652062756c6c277320657965";
 
-    let result = xor_bytes(&decode(input_a), &decode(input_b));
+    let bytes_a = decode(input_a).expect("valid hex string");
+    let bytes_b = decode(input_b).expect("valid hex string");
+    let result = xor_bytes(&bytes_a, &bytes_b);
 
     let hex = encode(&result);
     println!("A({}) ⊕ B({}) = C({})", input_a, input_b, hex);
