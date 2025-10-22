@@ -3,6 +3,8 @@
 //! This module implements Base64 encoding as specified in
 //! [RFC 4648 Section 4](https://datatracker.ietf.org/doc/html/rfc4648#section-4).
 
+use crate::encoding::error::{Encoding, ParsingDirection, ParsingError};
+use itertools::Itertools;
 use std::sync::LazyLock;
 
 /// Base64 character set: A-Z, a-z, 0-9, +, /
@@ -108,56 +110,119 @@ pub fn encode(bytes: &[u8]) -> String {
     format!("{}{}", complete_triplets, padding)
 }
 
-pub fn decode(encoded: &str) -> Vec<u8> {
-    todo!()
+/// Converts a base64 representation to its u6 value, '=' is returned as value 65
+#[inline]
+fn decode_sextet(value: char) -> u8 {
+    if value == '=' {
+        return 65;
+    }
+
+    BASE64_CHARSET
+        .iter()
+        .find_position(|&ch| ch.eq(&value))
+        .map(|(idx, _)| idx as u8)
+        .expect("value is a base64 character")
+}
+
+fn decode_quatret(encoded: &[char; 4]) -> Result<Vec<u8>, ParsingError> {
+    let chars: [Option<u8>; 4] = encoded
+        .iter()
+        .map(|&char| {
+            if char.eq(&'=') {
+                None
+            } else {
+                Some(decode_sextet(char))
+            }
+        })
+        .collect::<Vec<Option<u8>>>()
+        .try_into()
+        .expect("no filtering was done");
+
+    if chars[0].is_none() && chars[1].is_none() {
+        return Err(ParsingError::from_string(
+            ParsingDirection::Decoding,
+            Encoding::Base64,
+            String::from_iter(encoded.iter()),
+        ));
+    }
+
+    let (first_sextet, second_sextet) = (chars[0].unwrap(), chars[1].unwrap());
+
+    let first_byte = first_sextet << 2 | (second_sextet & 0b00110000) >> 4;
+    if chars[2].is_none() {
+        return Ok(vec![first_byte]);
+    }
+
+    let third_sextet = chars[2].unwrap();
+    let second_byte = (second_sextet & 0b00001111) << 4 | (third_sextet & 0b111100) >> 2;
+    if chars[3].is_none() {
+        return Ok(vec![first_byte, second_byte]);
+    }
+
+    let fourth_sextet = chars[3].unwrap();
+    let third_byte = (third_sextet & 0b11) << 6 | fourth_sextet;
+    Ok(vec![first_byte, second_byte, third_byte])
+}
+
+pub fn decode(encoded: &str) -> Result<Vec<u8>, ParsingError> {
+    if encoded.len() % 4 != 0 {
+        return Err(ParsingError::from_string(
+            ParsingDirection::Decoding,
+            Encoding::Base64,
+            encoded.to_owned(),
+        ));
+    }
+
+    encoded
+        .chars()
+        .chunks(4)
+        .into_iter()
+        .try_fold(Vec::new(), |mut acc, chunk| {
+            let decoded = decode_quatret(&chunk.collect_array::<4>().unwrap())?;
+            acc.extend(decoded);
+            Ok(acc)
+        })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use regex::Regex;
 
     #[test]
     fn test_encode_empty() {
         assert_eq!(encode(b""), "");
+        assert_eq!(decode("").unwrap(), b"");
     }
 
     #[test]
     fn test_encode_single_byte() {
         assert_eq!(encode(&[0xAB]), "qw==");
+        assert_eq!(decode("qw==").unwrap(), [0xAB]);
     }
 
     #[test]
     fn test_encode_two_bytes() {
         assert_eq!(encode(b"Hi"), "SGk=");
+        assert_eq!(decode("SGk=").unwrap(), b"Hi");
     }
 
     #[test]
     fn test_encode_three_bytes() {
         assert_eq!(encode(b"Man"), "TWFu");
+        assert_eq!(decode("TWFu").unwrap(), b"Man");
     }
 
     #[test]
     fn test_encode_longer_strings() {
         assert_eq!(encode(b"Hello"), "SGVsbG8=");
+        assert_eq!(decode("SGVsbG8=").unwrap(), b"Hello");
         assert_eq!(
             encode(b"I'm killing your brain like a poisonous mushroom"),
             "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
         );
-    }
-
-    #[test]
-    fn test_output_is_valid_base64() {
-        let test_inputs: &[&[u8]] = &[b"", b"f", b"fo", b"foo", b"foob", b"fooba", b"foobar"];
-        let base64_regex = Regex::new(r"^[A-Za-z0-9+/]*={0,2}$").unwrap();
-
-        for input in test_inputs {
-            let encoded = encode(input);
-            assert!(
-                base64_regex.is_match(&encoded),
-                "Output '{}' is not valid Base64",
-                encoded
-            );
-        }
+        assert_eq!(
+            decode("SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t").unwrap(),
+            b"I'm killing your brain like a poisonous mushroom"
+        );
     }
 }
