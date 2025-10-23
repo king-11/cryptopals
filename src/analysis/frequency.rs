@@ -87,7 +87,7 @@ pub fn break_single_byte_xor(
 }
 
 pub fn default_charset() -> HashSet<char> {
-    ('a'..='z').chain('A'..='Z').chain('0'..='9').collect()
+    (0..=127).map(|idx| char::from_u32(idx).unwrap()).collect()
 }
 
 #[cfg(test)]
