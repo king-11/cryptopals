@@ -41,8 +41,8 @@ pub fn calculate_frequencies(character_set: &HashSet<char>, text: &str) -> BTree
 
 /// Scores text based on how well it matches expected character frequencies.
 ///
-/// Lower scores indicate better matches. This uses the sum of absolute
-/// differences between expected and actual frequencies.
+/// Higher scores indicate better matches. This uses the multiplicative
+/// square root of expected and actual frequencies. (Bhattacharyya Distance)
 pub fn score_text(
     text: &str,
     expected_frequency: &BTreeMap<char, f32>,
@@ -55,7 +55,7 @@ pub fn score_text(
         .map(|&ch| {
             let expected = expected_frequency.get(&ch).unwrap_or(&0.0);
             let actual = actual_frequency.get(&ch).unwrap_or(&0.0);
-            (expected - actual).abs()
+            (expected * actual).sqrt()
         })
         .sum()
 }
@@ -69,22 +69,21 @@ pub fn break_single_byte_xor(
     bytes: &[u8],
     expected_frequency: &BTreeMap<char, f32>,
     character_set: &HashSet<char>,
-) -> Option<(f32, String)> {
+) -> Option<(f32, char, String)> {
     character_set
         .iter()
         .filter_map(|&ch| {
             let decrypted_bytes = xor::single_char_xor(bytes, ch);
-            String::from_utf8(decrypted_bytes).ok()
+            match String::from_utf8(decrypted_bytes) {
+                Ok(result) => Some((ch, result)),
+                _ => None,
+            }
         })
-        .map(|plaintext| {
+        .map(|(ch, plaintext)| {
             let score = score_text(&plaintext, expected_frequency, character_set);
-            (score, plaintext)
+            (score, ch, plaintext)
         })
-        .min_by(|(score_a, _), (score_b, _)| {
-            score_a
-                .partial_cmp(score_b)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        })
+        .max_by(|(score_a, _, _), (score_b, _, _)| score_a.total_cmp(score_b))
 }
 
 pub fn default_charset() -> HashSet<char> {
@@ -115,6 +114,6 @@ mod tests {
         let score1 = score_text("ab", &expected_freq, &charset);
         let score2 = score_text("aaaa", &expected_freq, &charset);
 
-        assert!(score1 < score2);
+        assert!(score1 > score2);
     }
 }

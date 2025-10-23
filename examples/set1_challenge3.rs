@@ -26,6 +26,6 @@ fn main() {
     let result = break_single_byte_xor(&bytes, &expected_frequencies, &character_set);
 
     assert!(result.is_some());
-    let (_, plaintext) = result.unwrap();
+    let (_, _, plaintext) = result.unwrap();
     assert_eq!("Cooking MC's like a pound of bacon", plaintext);
 }

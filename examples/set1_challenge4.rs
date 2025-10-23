@@ -30,7 +30,7 @@ fn main() {
         let hex_line = line.expect("file contains valid UTF-8");
         let bytes = hex::decode(&hex_line).expect("valid hex string");
 
-        if let Some((score, plaintext)) =
+        if let Some((score, _, plaintext)) =
             break_single_byte_xor(&bytes, &expected_frequencies, &character_set)
         {
             scores.insert(plaintext, score);
@@ -39,11 +39,7 @@ fn main() {
 
     let best_match = scores
         .iter()
-        .min_by(|(_, score_a), (_, score_b)| {
-            score_a
-                .partial_cmp(score_b)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        })
+        .max_by(|(_, score_a), (_, score_b)| score_a.total_cmp(score_b))
         .map(|(text, _)| text)
         .expect("found at least one match");
 
