@@ -12,7 +12,7 @@ pub fn hamming_distance(a: &[u8], b: &[u8]) -> usize {
     xored.iter().map(|&byte| count_set_bits(byte)).sum()
 }
 
-pub fn probably_key_sizes(
+pub fn probable_key_sizes(
     bytes: &[u8],
     keys_to_consider: usize,
     chunks_to_consider: usize,
@@ -29,7 +29,7 @@ pub fn probably_key_sizes(
             let norm_distances = bytes
                 .chunks_exact(key_size)
                 .take(chunks_to_consider)
-                .tuples()
+                .tuple_windows()
                 .map(|(a, b)| (hamming_distance(a, b) as f32 / key_size as f32))
                 .collect_vec();
             (
@@ -89,11 +89,11 @@ mod tests {
     #[test]
     fn test_find_key_size() {
         let encrypted = vec![0x00, 0x63, 0x24, 0x24, 0x63, 0x24, 0x25, 0x33, 0x2D, 0x28];
-        assert_eq!(vec![3, 2, 5], probably_key_sizes(&encrypted, 3, 2, 20));
+        assert_eq!(vec![3, 2, 5], probable_key_sizes(&encrypted, 3, 2, 20));
 
         assert_eq!(
             vec![7, 2, 8],
-            probably_key_sizes(
+            probable_key_sizes(
                 &vec![
                     61, 10, 12, 18, 6, 23, 7, 109, 5, 24, 22, 82, 18, 1, 63, 15, 8, 65, 17, 13, 15,
                     32, 19, 5, 14, 28, 69, 91, 57, 11, 76, 21, 19, 14, 11, 35, 66
@@ -104,7 +104,7 @@ mod tests {
             )
         );
 
-        assert_eq!(vec![] as Vec<u32>, probably_key_sizes(&vec![], 3, 2, 20));
+        assert_eq!(vec![] as Vec<u32>, probable_key_sizes(&vec![], 3, 2, 20));
     }
 
     #[test]
