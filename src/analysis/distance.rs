@@ -43,6 +43,21 @@ pub fn probably_key_sizes(
         .collect_vec()
 }
 
+pub fn transpose_byte_chunks(bytes: &[u8], block_size: u32) -> Vec<Vec<u8>> {
+    debug_assert!(block_size > 0);
+    let block_bytes_capacity = bytes.len() as u32 / block_size + 1;
+    let mut byte_blocks: Vec<Vec<u8>> = (0..block_size)
+        .map(|_| Vec::with_capacity(block_bytes_capacity as usize))
+        .collect_vec();
+
+    bytes
+        .iter()
+        .enumerate()
+        .for_each(|(idx, &byte)| byte_blocks[idx % block_size as usize].push(byte));
+
+    byte_blocks
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,5 +105,20 @@ mod tests {
         );
 
         assert_eq!(vec![] as Vec<u32>, probably_key_sizes(&vec![], 3, 2, 20));
+    }
+
+    #[test]
+    fn test_transpose_bytes() {
+        let bytes = vec![1, 2, 4, 6, 11, 24, 101];
+
+        assert_eq!(
+            vec![vec![1, 6, 101], vec![2, 11], vec![4, 24]],
+            transpose_byte_chunks(&bytes, 3)
+        );
+
+        assert_eq!(
+            vec![vec![1, 11], vec![2, 24], vec![4, 101], vec![6]],
+            transpose_byte_chunks(&bytes, 4)
+        );
     }
 }
